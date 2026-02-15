@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lorenz Attractor 3D - Chaos Theory</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: radial-gradient(ellipse at center, #0a0e27 0%, #000000 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            perspective: 1500px;
+            overflow: hidden;
+        }
+
+        .lorenz-container {
+            position: relative;
+            width: 800px;
+            height: 800px;
+            transform-style: preserve-3d;
+            animation: rotateLorenz 30s infinite linear;
+        }
+
+        @keyframes rotateLorenz {
+            0% {
+                transform: rotateY(0deg) rotateX(20deg) rotateZ(0deg);
+            }
+            100% {
+                transform: rotateY(360deg) rotateX(20deg) rotateZ(360deg);
+            }
+        }
+
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        .info {
+            position: absolute;
+            top: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.85);
+            padding: 20px 40px;
+            border-radius: 10px;
+            z-index: 1000;
+            max-width: 800px;
+        }
+
+        h1 {
+            margin-bottom: 10px;
+            font-size: 2em;
+            background: linear-gradient(45deg, #ff00ff, #00ffff, #ff00ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradientShift 3s infinite;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+        }
+
+        p {
+            font-size: 0.95em;
+            line-height: 1.6;
+            color: #e0e0e0;
+        }
+
+        .formula {
+            font-family: 'Courier New', monospace;
+            font-size: 0.8em;
+            margin: 15px 0;
+            padding: 10px;
+            background: rgba(255, 0, 255, 0.15);
+            border-radius: 5px;
+            color: #ff00ff;
+        }
+
+        .point {
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            border-radius: 50%;
+            box-shadow: 0 0 5px currentColor;
+        }
+    </style>
+</head>
+<body>
+    <div class="info">
+        <h1>Lorenz Attractor - Chaos Theory</h1>
+        <p>A set of chaotic solutions to the Lorenz system - deterministic but unpredictable</p>
+        <div class="formula">
+            dx/dt = σ(y - x)<br>
+            dy/dt = x(ρ - z) - y<br>
+            dz/dt = xy - βz<br>
+            σ = 10 (Prandtl number), ρ = 28 (Rayleigh number), β = 8/3
+        </div>
+        <p style="font-size: 0.85em; margin-top: 10px;">
+            The butterfly effect: tiny changes in initial conditions lead to vastly different outcomes
+        </p>
+    </div>
+
+    <div class="lorenz-container" id="lorenzContainer"></div>
+
+    <script>
+        const container = document.getElementById('lorenzContainer');
+        
+        // Lorenz system parameters
+        const sigma = 10;
+        const rho = 28;
+        const beta = 8/3;
+        
+        // Integration step
+        const dt = 0.01;
+        
+        // Scale factor for visualization
+        const scale = 8;
+        
+        // Initial conditions (multiple starting points for variety)
+        const trajectories = [
+            { x: 0.1, y: 0, z: 0, color: { h: 280, s: 100, l: 60 } },
+            { x: 0.11, y: 0, z: 0, color: { h: 180, s: 100, l: 60 } },
+            { x: -0.1, y: 0, z: 0, color: { h: 320, s: 100, l: 60 } }
+        ];
+        
+        // Store points for trail effect
+        const maxPoints = 1500;
+        const pointHistories = trajectories.map(() => []);
+        
+        // Calculate next point using Runge-Kutta method
+        function lorenzStep(x, y, z) {
+            const dx = sigma * (y - x);
+            const dy = x * (rho - z) - y;
+            const dz = x * y - beta * z;
+            
+            return {
+                x: x + dx * dt,
+                y: y + dy * dt,
+                z: z + dz * dt
+            };
+        }
+        
+        // Create point element
+        function createPoint(x, y, z, color, alpha) {
+            const point = document.createElement('div');
+            point.className = 'point';
+            
+            const px = 400 + x * scale;
+            const py = 400 + y * scale;
+            const pz = z * scale - 200;
+            
+            point.style.transform = `translate3d(${px}px, ${py}px, ${pz}px)`;
+            point.style.background = `hsla(${color.h}, ${color.s}%, ${color.l}%, ${alpha})`;
+            point.style.color = `hsla(${color.h}, ${color.s}%, ${color.l}%, ${alpha})`;
+            
+            return point;
+        }
+        
+        // Animation loop
+        function animate() {
+            trajectories.forEach((traj, idx) => {
+                // Calculate next position
+                const next = lorenzStep(traj.x, traj.y, traj.z);
+                traj.x = next.x;
+                traj.y = next.y;
+                traj.z = next.z;
+                
+                // Add to history
+                pointHistories[idx].push({ x: traj.x, y: traj.y, z: traj.z });
+                
+                // Limit history length
+                if (pointHistories[idx].length > maxPoints) {
+                    pointHistories[idx].shift();
+                }
+            });
+            
+            // Clear and redraw
+            container.innerHTML = '';
+            
+            pointHistories.forEach((history, idx) => {
+                history.forEach((point, i) => {
+                    // Fade older points
+                    const alpha = (i / history.length) * 0.8 + 0.2;
+                    const pointEl = createPoint(
+                        point.x, 
+                        point.y, 
+                        point.z, 
+                        trajectories[idx].color,
+                        alpha
+                    );
+                    container.appendChild(pointEl);
+                });
+            });
+            
+            requestAnimationFrame(animate);
+        }
+        
+        // Start animation
+        animate();
+        
+        // Add some sparkle particles for effect
+        setInterval(() => {
+            if (pointHistories[0].length > 0) {
+                const randomTraj = Math.floor(Math.random() * trajectories.length);
+                const history = pointHistories[randomTraj];
+                const randomPoint = history[Math.floor(Math.random() * history.length)];
+                
+                if (randomPoint) {
+                    const sparkle = createPoint(
+                        randomPoint.x, 
+                        randomPoint.y, 
+                        randomPoint.z,
+                        { h: 60, s: 100, l: 100 },
+                        1
+                    );
+                    sparkle.style.width = '5px';
+                    sparkle.style.height = '5px';
+                    sparkle.style.boxShadow = '0 0 15px yellow';
+                    sparkle.style.animation = 'pulse 0.5s ease-out';
+                    container.appendChild(sparkle);
+                    
+                    setTimeout(() => sparkle.remove(), 500);
+                }
+            }
+        }, 100);
+    </script>
+</body>
+</html>

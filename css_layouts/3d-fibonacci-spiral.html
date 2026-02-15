@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fibonacci Spiral 3D - Mathematical Animation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #232526 0%, #414345 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            perspective: 1500px;
+            overflow: hidden;
+        }
+
+        .spiral-container {
+            position: relative;
+            width: 800px;
+            height: 800px;
+            transform-style: preserve-3d;
+            animation: rotateFibonacci 30s infinite linear;
+        }
+
+        @keyframes rotateFibonacci {
+            0% {
+                transform: rotateY(0deg) rotateX(20deg);
+            }
+            100% {
+                transform: rotateY(360deg) rotateX(20deg);
+            }
+        }
+
+        .box {
+            position: absolute;
+            border: 2px solid rgba(255, 215, 0, 0.6);
+            background: rgba(255, 215, 0, 0.1);
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: gold;
+            font-weight: bold;
+            font-size: 14px;
+            animation: pulse 3s infinite alternate;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+            }
+            100% {
+                box-shadow: 0 0 30px rgba(255, 215, 0, 0.6);
+            }
+        }
+
+        .arc {
+            position: absolute;
+            border: 3px solid rgba(255, 215, 0, 0.8);
+            border-radius: 50%;
+            border-right: none;
+            border-bottom: none;
+        }
+
+        .info {
+            position: absolute;
+            top: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px 40px;
+            border-radius: 10px;
+            z-index: 1000;
+            max-width: 700px;
+        }
+
+        h1 {
+            margin-bottom: 10px;
+            font-size: 2em;
+            color: gold;
+        }
+
+        p {
+            font-size: 1em;
+            line-height: 1.6;
+            color: #e0e0e0;
+        }
+
+        .formula {
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            margin: 15px 0;
+            padding: 10px;
+            background: rgba(255, 215, 0, 0.2);
+            border-radius: 5px;
+            color: gold;
+        }
+
+        .sequence {
+            font-size: 0.9em;
+            margin-top: 10px;
+            color: #ffd700;
+        }
+    </style>
+</head>
+<body>
+    <div class="info">
+        <h1>Fibonacci Spiral in 3D</h1>
+        <p>Golden ratio spiral based on Fibonacci sequence</p>
+        <div class="formula">
+            F(n) = F(n-1) + F(n-2)<br>
+            Golden Ratio: φ = (1 + √5) / 2 ≈ 1.618<br>
+            lim(n→∞) F(n+1)/F(n) = φ
+        </div>
+        <div class="sequence">
+            Sequence: 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89...
+        </div>
+    </div>
+
+    <div class="spiral-container" id="spiralContainer"></div>
+
+    <script>
+        const container = document.getElementById('spiralContainer');
+        
+        // Generate Fibonacci sequence
+        function fibonacci(n) {
+            const fib = [1, 1];
+            for (let i = 2; i <= n; i++) {
+                fib[i] = fib[i-1] + fib[i-2];
+            }
+            return fib;
+        }
+
+        // Generate Fibonacci spiral with 3D depth
+        const fibNumbers = fibonacci(12);
+        const scale = 4; // Scale factor for visualization
+        let x = 0, y = 0;
+        let direction = 0; // 0: right, 1: up, 2: left, 3: down
+
+        fibNumbers.forEach((num, index) => {
+            if (index < 2) return; // Skip first two
+
+            const size = num * scale;
+            const z = index * 20 - 120; // 3D depth
+
+            // Create box
+            const box = document.createElement('div');
+            box.className = 'box';
+            box.textContent = num;
+            box.style.width = `${size}px`;
+            box.style.height = `${size}px`;
+            box.style.left = `${400 + x}px`;
+            box.style.top = `${400 + y}px`;
+            box.style.transform = `translateZ(${z}px)`;
+            
+            // Color based on index (golden gradient)
+            const hue = 45 + (index * 5);
+            box.style.borderColor = `hsl(${hue}, 100%, 50%)`;
+            box.style.background = `hsla(${hue}, 100%, 50%, 0.1)`;
+            box.style.color = `hsl(${hue}, 100%, 70%)`;
+            
+            container.appendChild(box);
+
+            // Create arc for spiral
+            if (index > 2) {
+                const arc = document.createElement('div');
+                arc.className = 'arc';
+                arc.style.width = `${size}px`;
+                arc.style.height = `${size}px`;
+                arc.style.left = `${400 + x}px`;
+                arc.style.top = `${400 + y}px`;
+                arc.style.transform = `translateZ(${z}px) rotate(${direction * 90}deg)`;
+                arc.style.borderColor = `hsl(${hue}, 100%, 60%)`;
+                container.appendChild(arc);
+            }
+
+            // Update position for next box
+            switch(direction) {
+                case 0: // right
+                    x += size;
+                    direction = 1;
+                    break;
+                case 1: // up
+                    y -= size;
+                    direction = 2;
+                    break;
+                case 2: // left
+                    x -= size;
+                    direction = 3;
+                    break;
+                case 3: // down
+                    y += size;
+                    direction = 0;
+                    break;
+            }
+        });
+
+        // Add some floating particles for effect
+        for (let i = 0; i < 50; i++) {
+            const particle = document.createElement('div');
+            particle.style.position = 'absolute';
+            particle.style.width = '3px';
+            particle.style.height = '3px';
+            particle.style.borderRadius = '50%';
+            particle.style.background = 'gold';
+            particle.style.boxShadow = '0 0 10px gold';
+            
+            const angle = (i / 50) * Math.PI * 8;
+            const radius = angle * 20;
+            const px = 400 + Math.cos(angle) * radius;
+            const py = 400 + Math.sin(angle) * radius;
+            const pz = i * 5 - 125;
+            
+            particle.style.left = `${px}px`;
+            particle.style.top = `${py}px`;
+            particle.style.transform = `translateZ(${pz}px)`;
+            particle.style.animation = `pulse ${2 + Math.random()}s infinite alternate`;
+            
+            container.appendChild(particle);
+        }
+    </script>
+</body>
+</html>
