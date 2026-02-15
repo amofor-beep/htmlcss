@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Sphere with Latitude/Longitude - Mathematical Animation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #141e30 0%, #243b55 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            perspective: 1200px;
+            overflow: hidden;
+        }
+
+        .sphere-container {
+            position: relative;
+            width: 600px;
+            height: 600px;
+            transform-style: preserve-3d;
+            animation: rotateSphere 25s infinite linear;
+        }
+
+        @keyframes rotateSphere {
+            0% {
+                transform: rotateY(0deg) rotateX(15deg);
+            }
+            100% {
+                transform: rotateY(360deg) rotateX(15deg);
+            }
+        }
+
+        .sphere-point {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            box-shadow: 0 0 15px currentColor;
+        }
+
+        .latitude-circle, .longitude-circle {
+            position: absolute;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+        }
+
+        .info {
+            position: absolute;
+            top: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px 40px;
+            border-radius: 10px;
+            z-index: 1000;
+            max-width: 700px;
+        }
+
+        h1 {
+            margin-bottom: 10px;
+            font-size: 2em;
+            color: #64b5f6;
+        }
+
+        p {
+            font-size: 1em;
+            line-height: 1.6;
+            color: #e0e0e0;
+        }
+
+        .formula {
+            font-family: 'Courier New', monospace;
+            font-size: 0.85em;
+            margin: 15px 0;
+            padding: 10px;
+            background: rgba(100, 181, 246, 0.2);
+            border-radius: 5px;
+            color: #64b5f6;
+        }
+    </style>
+</head>
+<body>
+    <div class="info">
+        <h1>3D Sphere with Grid</h1>
+        <p>Spherical coordinates converted to Cartesian (latitude & longitude)</p>
+        <div class="formula">
+            x = R·sin(θ)·cos(φ)<br>
+            y = R·sin(θ)·sin(φ)<br>
+            z = R·cos(θ)<br>
+            θ = latitude [0, π], φ = longitude [0, 2π], R = radius
+        </div>
+    </div>
+
+    <div class="sphere-container" id="sphereContainer"></div>
+
+    <script>
+        const container = document.getElementById('sphereContainer');
+        const radius = 200;
+        const latitudes = 12;  // Number of latitude circles
+        const longitudes = 18; // Number of longitude circles
+
+        // Generate sphere using spherical coordinates
+        function generateSphere() {
+            // Draw latitude circles
+            for (let lat = 1; lat < latitudes; lat++) {
+                const theta = (lat / latitudes) * Math.PI;
+                const circleRadius = radius * Math.sin(theta);
+                const zPos = radius * Math.cos(theta);
+                
+                const circle = document.createElement('div');
+                circle.className = 'latitude-circle';
+                circle.style.width = `${circleRadius * 2}px`;
+                circle.style.height = `${circleRadius * 2}px`;
+                circle.style.left = `${300 - circleRadius}px`;
+                circle.style.top = `${300 - circleRadius}px`;
+                circle.style.transform = `translateZ(${zPos}px)`;
+                circle.style.borderColor = `rgba(100, 181, 246, ${0.3 + lat * 0.05})`;
+                container.appendChild(circle);
+            }
+
+            // Draw longitude circles
+            for (let lon = 0; lon < longitudes; lon++) {
+                const phi = (lon / longitudes) * 2 * Math.PI;
+                const rotateY = (phi * 180 / Math.PI);
+                
+                const circle = document.createElement('div');
+                circle.className = 'longitude-circle';
+                circle.style.width = `${radius * 2}px`;
+                circle.style.height = `${radius * 2}px`;
+                circle.style.left = `${300 - radius}px`;
+                circle.style.top = `${300 - radius}px`;
+                circle.style.transform = `rotateY(${rotateY}deg)`;
+                circle.style.borderColor = `rgba(255, 255, 255, 0.2)`;
+                container.appendChild(circle);
+            }
+
+            // Generate points on sphere surface
+            const pointsPerCircle = 40;
+            for (let i = 0; i <= latitudes; i++) {
+                for (let j = 0; j < pointsPerCircle; j++) {
+                    const theta = (i / latitudes) * Math.PI; // latitude
+                    const phi = (j / pointsPerCircle) * 2 * Math.PI; // longitude
+
+                    // Spherical to Cartesian conversion
+                    const x = radius * Math.sin(theta) * Math.cos(phi);
+                    const y = radius * Math.sin(theta) * Math.sin(phi);
+                    const z = radius * Math.cos(theta);
+
+                    // Create point
+                    const point = document.createElement('div');
+                    point.className = 'sphere-point';
+                    
+                    // Color based on latitude (pole to pole gradient)
+                    const hue = 200 + (i / latitudes) * 100;
+                    const brightness = 50 + (i / latitudes) * 50;
+                    point.style.color = `hsl(${hue}, 100%, ${brightness}%)`;
+                    point.style.background = `hsl(${hue}, 100%, ${brightness}%)`;
+                    
+                    // Position in 3D space
+                    point.style.transform = `translate3d(${x}px, ${y}px, ${z}px)`;
+                    
+                    container.appendChild(point);
+                }
+            }
+
+            // Add equator highlighting
+            const equator = document.createElement('div');
+            equator.className = 'latitude-circle';
+            equator.style.width = `${radius * 2}px`;
+            equator.style.height = `${radius * 2}px`;
+            equator.style.left = `${300 - radius}px`;
+            equator.style.top = `${300 - radius}px`;
+            equator.style.transform = `translateZ(0px)`;
+            equator.style.borderColor = 'rgba(255, 100, 100, 0.8)';
+            equator.style.borderWidth = '3px';
+            container.appendChild(equator);
+
+            // Add poles
+            const northPole = document.createElement('div');
+            northPole.className = 'sphere-point';
+            northPole.style.width = '15px';
+            northPole.style.height = '15px';
+            northPole.style.background = 'cyan';
+            northPole.style.color = 'cyan';
+            northPole.style.transform = `translate3d(0px, 0px, ${radius}px)`;
+            northPole.style.boxShadow = '0 0 20px cyan';
+            container.appendChild(northPole);
+
+            const southPole = document.createElement('div');
+            southPole.className = 'sphere-point';
+            southPole.style.width = '15px';
+            southPole.style.height = '15px';
+            southPole.style.background = 'magenta';
+            southPole.style.color = 'magenta';
+            southPole.style.transform = `translate3d(0px, 0px, ${-radius}px)`;
+            southPole.style.boxShadow = '0 0 20px magenta';
+            container.appendChild(southPole);
+        }
+
+        // Initialize sphere
+        generateSphere();
+    </script>
+</body>
+</html>

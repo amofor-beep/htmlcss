@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Wave Function - Mathematical Animation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            perspective: 1200px;
+            overflow: hidden;
+        }
+
+        .wave-container {
+            position: relative;
+            width: 800px;
+            height: 600px;
+            transform-style: preserve-3d;
+            animation: rotateWave 15s infinite linear;
+        }
+
+        @keyframes rotateWave {
+            0% {
+                transform: rotateX(60deg) rotateZ(0deg);
+            }
+            100% {
+                transform: rotateX(60deg) rotateZ(360deg);
+            }
+        }
+
+        .point {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #00d4ff, #0088ff);
+            box-shadow: 0 0 10px #00d4ff, 0 0 20px #00d4ff;
+        }
+
+        .info {
+            position: absolute;
+            top: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px 40px;
+            border-radius: 10px;
+            z-index: 1000;
+            max-width: 700px;
+        }
+
+        h1 {
+            margin-bottom: 10px;
+            font-size: 2em;
+            color: #00d4ff;
+        }
+
+        p {
+            font-size: 1em;
+            line-height: 1.6;
+            color: #e0e0e0;
+        }
+
+        .formula {
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            margin: 15px 0;
+            padding: 10px;
+            background: rgba(0, 212, 255, 0.2);
+            border-radius: 5px;
+            color: #00d4ff;
+        }
+
+        .controls {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px 30px;
+            border-radius: 10px;
+            z-index: 1000;
+        }
+
+        button {
+            margin: 5px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            background: #00d4ff;
+            color: #0f2027;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            background: #00ffff;
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+    <div class="info">
+        <h1>3D Wave Function Visualization</h1>
+        <p>Mathematical representation of sine and cosine waves in 3D space</p>
+        <div class="formula">
+            z = A·sin(kx - ωt + φ₁)·cos(ky - ωt + φ₂)<br>
+            A = amplitude, k = wave number, ω = angular frequency, φ = phase
+        </div>
+    </div>
+
+    <div class="wave-container" id="waveContainer"></div>
+
+    <div class="controls">
+        <button onclick="changeWaveType('sine')">Sine Wave</button>
+        <button onclick="changeWaveType('cosine')">Cosine Wave</button>
+        <button onclick="changeWaveType('combined')">Combined</button>
+    </div>
+
+    <script>
+        const container = document.getElementById('waveContainer');
+        const gridSize = 40;
+        const spacing = 15;
+        let time = 0;
+        let waveType = 'combined';
+        let points = [];
+
+        // Initialize grid points
+        function initializeGrid() {
+            container.innerHTML = '';
+            points = [];
+            
+            for (let i = 0; i < gridSize; i++) {
+                for (let j = 0; j < gridSize; j++) {
+                    const point = document.createElement('div');
+                    point.className = 'point';
+                    container.appendChild(point);
+                    points.push({
+                        element: point,
+                        baseX: (i - gridSize / 2) * spacing,
+                        baseY: (j - gridSize / 2) * spacing,
+                        i: i,
+                        j: j
+                    });
+                }
+            }
+        }
+
+        // Calculate wave height based on position and time
+        function getWaveHeight(x, y, t) {
+            const k = 0.1; // wave number
+            const omega = 0.05; // angular frequency
+            
+            switch(waveType) {
+                case 'sine':
+                    return 50 * Math.sin(k * x - omega * t) * Math.sin(k * y - omega * t);
+                case 'cosine':
+                    return 50 * Math.cos(k * x - omega * t) * Math.cos(k * y - omega * t);
+                case 'combined':
+                default:
+                    return 40 * Math.sin(k * x - omega * t) * Math.cos(k * y - omega * t);
+            }
+        }
+
+        // Update wave animation
+        function updateWave() {
+            time += 1;
+            
+            points.forEach(point => {
+                const z = getWaveHeight(point.baseX, point.baseY, time);
+                
+                // Calculate color based on height
+                const hue = ((z + 50) / 100) * 240; // Blue to cyan gradient
+                const brightness = 50 + ((z + 50) / 100) * 50;
+                
+                point.element.style.transform = 
+                    `translate3d(${point.baseX}px, ${point.baseY}px, ${z}px)`;
+                point.element.style.background = 
+                    `hsl(${hue}, 100%, ${brightness}%)`;
+                point.element.style.boxShadow = 
+                    `0 0 10px hsl(${hue}, 100%, ${brightness}%), 
+                     0 0 20px hsl(${hue}, 100%, ${brightness}%)`;
+            });
+            
+            requestAnimationFrame(updateWave);
+        }
+
+        function changeWaveType(type) {
+            waveType = type;
+        }
+
+        // Initialize and start animation
+        initializeGrid();
+        updateWave();
+    </script>
+</body>
+</html>
